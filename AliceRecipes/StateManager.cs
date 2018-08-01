@@ -1,7 +1,8 @@
-using AliceRecipes.States;
+using AliceKit.Framework;
+using AliceKit.Protocol;
 
 namespace AliceRecipes {
   public interface IStateManager {
-    PhaseBase GetState(AliceRequest request);
+    BlockBase GetState(AliceRequest request);
   }
 }

@@ -1,3 +1,5 @@
+using AliceKit.Framework;
+
 namespace AliceRecipes.Intents {
   public class SearchRequestIntent : IntentBase {
     public string Query { get; }

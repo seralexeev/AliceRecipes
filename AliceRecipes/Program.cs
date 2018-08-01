@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
-using System.Threading.Tasks;
+using System.Reflection;
+using AliceKit;
+using AliceKit.Framework;
+using AliceKit.Helpers;
+using AliceKit.Protocol;
 using AliceRecipes.Services;
 using AliceRecipes.States;
 using Microsoft.AspNetCore;
@@ -10,12 +15,36 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Debug;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace AliceRecipes {
+  class BlockFactory : IBlockFactory {
+    private readonly IServiceProvider _serviceProvider;
+    private Dictionary<string, Type> _blocks;
+
+    public BlockFactory(IServiceProvider serviceProvider) {
+      _serviceProvider = serviceProvider;
+
+      _blocks = new[] {
+        typeof(InitialBlock), typeof(PendingSearchBlock), typeof(RecipeSelectedBlock), typeof(RecipeSelectingBlock)
+      }.GroupBy(x => x.Name).ToDictionary(x => x.Key, x => x.FirstOrDefault());
+    }
+
+    public BlockBase CreateBlock(string name, object state = null) {
+      var block = _serviceProvider.GetService(_blocks[name]) as BlockBase;
+      if (block is IStatefulBlock sblock) {
+        sblock.State = state;
+      }
+
+      return block;
+    }
+  }
+
   public class Alice : Controller {
     private readonly IServiceProvider _serviceProvider;
+
     static void Main(string[] args) {
       CreateWebHostBuilder(args).Build().Run();
     }
@@ -25,6 +54,7 @@ namespace AliceRecipes {
         .ConfigureServices(srv => {
           srv.AddMvc().AddJsonOptions(options => {
             options.SerializerSettings.Converters.Add(new StringEnumConverter(false));
+            options.SerializerSettings.ContractResolver = new MaxLengthContractResolver();
           });
 
           srv.AddHttpClient();
@@ -32,10 +62,10 @@ namespace AliceRecipes {
           srv.AddSingleton<GraphQL>();
           srv.AddSingleton<RecipeInfoReply>();
           srv
-            .AddTransient<InitialPhase>()
-            .AddTransient<PendingSearch>()
-            .AddTransient<RecipeSelecting>()
-            .AddTransient<RecipeSelected>();
+            .AddTransient<InitialBlock>()
+            .AddTransient<PendingSearchBlock>()
+            .AddTransient<RecipeSelectingBlock>()
+            .AddTransient<RecipeSelectedBlock>();
 
           srv.AddSingleton<IRecipeService, PostgresRecipeService>();
 
@@ -47,50 +77,36 @@ namespace AliceRecipes {
         });
 
     public Alice(IServiceProvider serviceProvider) {
-      _serviceProvider = serviceProvider;
+      _processor = new Processor(new BlockFactory(serviceProvider), typeof(InitialBlock).Name);
     }
 
-    class DbState {
-      public Type Type { get; set; }
-      public object State { get; set; }
-    }
-
-    static Dictionary<string, DbState> _db = new Dictionary<string, DbState>();
+    private Processor _processor;
 
     [HttpPost("/")]
-    public AliceResponse WebHook([FromBody] AliceRequest req) {
-      var phaseType = typeof(InitialPhase);
-      object state = null;
+    public AliceResponse WebHook([FromBody] AliceRequest req) => _processor.Process(req);
+  }
 
-      if (_db.TryGetValue(req.Session.SessionId, out var dbState)) {
-        phaseType = dbState.Type;
-        state = dbState.State;
+  public class StringConvertor : JsonConverter<string> {
+    private readonly int _maxLength;
+
+    public StringConvertor(int maxLength) => _maxLength = maxLength;
+
+    public override void WriteJson(JsonWriter writer, string value, JsonSerializer serializer) =>
+      writer.WriteValue(value.TruncateBySentence(_maxLength));
+
+    public override string ReadJson(JsonReader reader, Type objectType, string existingValue, bool hasExistingValue,
+      JsonSerializer serializer) => throw new NotImplementedException();
+  }
+
+  public class MaxLengthContractResolver : CamelCasePropertyNamesContractResolver {
+    protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization) {
+      var property = base.CreateProperty(member, memberSerialization);
+      var attr = member.GetCustomAttribute<MaxLengthAttribute>();
+      if (attr != null) {
+        property.Converter = new StringConvertor(attr.MaxLength);
       }
 
-      var phase = _serviceProvider.GetRequiredService(phaseType) as PhaseBase;
-      if (phase is IStatefulPhase statefulPhase) {
-        statefulPhase.State = state;
-      }
-
-      var result = phase.Handle(req.Request);
-
-      var newPhaseType = phaseType;
-      var newState = state;
-      if (result.Transition != null) {
-        newPhaseType = result.Transition.Type;
-        newState = result.Transition.StateData;
-      }
-
-      _db[req.Session.SessionId] = new DbState {
-        Type = newPhaseType,
-        State = newState
-      };
-
-      return new AliceResponse {
-        Session = req.Session,
-        Version = req.Version,
-        Response = result.Response
-      };
+      return property;
     }
   }
 }
