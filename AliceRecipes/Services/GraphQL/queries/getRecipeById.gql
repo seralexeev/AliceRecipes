@@ -1,0 +1,30 @@
+query($id: Int!) {
+  query: recipeById(id: $id) {
+    id
+    name
+    image
+    aliceImageId
+    note
+    description
+    portionsCount
+    steps: stepsByRecipe {
+      items: nodes {
+        number
+        description
+      }
+    }
+    ingredients: recipeIngredientsByRecipe {
+      items: nodes {
+        amount
+        item: ingredientByIngredient {
+          id
+          name
+          measure
+          measure2
+          measure5
+          measureF
+        }
+      }
+    }
+  }
+}

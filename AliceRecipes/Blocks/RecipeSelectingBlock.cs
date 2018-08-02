@@ -1,4 +1,5 @@
 using System.Linq;
+using AliceKit;
 using AliceKit.Builders;
 using AliceKit.Framework;
 using AliceKit.Helpers;
@@ -7,15 +8,14 @@ using AliceKit.Protocol;
 using AliceRecipes.Intents;
 using AliceRecipes.Models;
 using AliceRecipes.Services;
-using static AliceKit.Builders.ReplyBuilder;
 
-namespace AliceRecipes.States {
+namespace AliceRecipes.Blocks {
   public class RecipeSelectingBlock : BlockBase<RecipeSelectingBlock.StateType>,
     IIntentHandler<NumberSelectionIntent>,
     IIntentHandler<CancelIntent>,
     IIntentHandler<ItemSelectionIntent<RecipePreview>> {
-    private readonly IRecipeService _recipeService;
-    private readonly RecipeInfoReply _recipeInfoReply;
+    readonly IRecipeService _recipeService;
+    readonly RecipeInfoReply _recipeInfoReply;
 
     public RecipeSelectingBlock(
       IRecipeService recipeService,
@@ -25,6 +25,11 @@ namespace AliceRecipes.States {
     }
 
     public override (bool ok, IntentBase intent) TryGetIntent(RequestModel req) {
+      var (numberOk, number) = FixedList.NumberMather.Match(req.GetSanitized());
+      if (numberOk) {
+        return (true, new NumberSelectionIntent(number));
+      }
+
       var text = req.GetSanitized();
       var (ok, item) = Similarity.TryGetMostSimilar(text, State.SearchResult.Items, x => x.Name);
       return ok ? (true, new ItemSelectionIntent<RecipePreview>(item)) : default;
@@ -36,12 +41,12 @@ namespace AliceRecipes.States {
     }
 
     public HandleResult Handle(CancelIntent intent) =>
-      Reply("Хорошо, давай попробуем найти что то другое")
+      ReplyBuilder.Reply("Хорошо, давай попробуем найти что то другое")
         .Transition<PendingSearchBlock>();
 
     public HandleResult Handle(ItemSelectionIntent<RecipePreview> intent) => SelectionReply(intent.Item);
 
-    private HandleResult SelectionReply(RecipePreview item) {
+    HandleResult SelectionReply(RecipePreview item) {
       if (item == null) {
         return Unkown();
       }
@@ -58,7 +63,7 @@ namespace AliceRecipes.States {
 
     public override HandleResult Handle(UnknownIntent intent) => Unkown();
 
-    private ReplyBuilder Unkown() => Reply("Я не очень тебя понял, выбери пожалуйста рецепт из списка или скажи отмена")
+    ReplyBuilder Unkown() => ReplyBuilder.Reply("Я не очень тебя понял, выбери пожалуйста рецепт из списка или скажи отмена")
       .ItemsListCard(card => card
         .Header("Вот что мне удалось найти:")
         .Items(State.SearchResult.Items, (x, i, builder) => builder

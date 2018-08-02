@@ -1,6 +1,4 @@
-using AliceKit.Helpers;
-
-namespace AliceKit {
+namespace AliceKit.Helpers {
   public static class FixedList {
     public static readonly string[] CancelWords = {
       "хватит",
@@ -16,6 +14,7 @@ namespace AliceKit {
       "выйди",
       "домой",
       "отмена",
+      "уходи",
       "отмени",
       "другое"
     };

@@ -19,7 +19,7 @@ namespace AliceKit.Protocol {
     [JsonProperty("card")]
     public CardModel Card { get; set; }
 
-    private ButtonModel[] _buttons;
+    ButtonModel[] _buttons;
 
     [JsonProperty("buttons")]
     public ButtonModel[] Buttons {
@@ -27,7 +27,7 @@ namespace AliceKit.Protocol {
       set => _buttons = value;
     }
 
-    private ButtonModel[] GetAsSuggestions() {
+    ButtonModel[] GetAsSuggestions() {
       foreach (var button in _buttons) {
         button.Hide = true;
       }

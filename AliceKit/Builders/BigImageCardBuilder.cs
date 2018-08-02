@@ -13,7 +13,7 @@ namespace AliceKit.Builders {
 
     public static implicit operator BigImageCard(BigImageCardBuilder replyBuilder) => replyBuilder._card;
 
-    private BigImageCardBuilder Set(Action<BigImageCard> act) {
+    BigImageCardBuilder Set(Action<BigImageCard> act) {
       act(_card);
       return this;
     }

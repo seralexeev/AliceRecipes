@@ -15,11 +15,28 @@
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.1.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="2.1.1" />
     <PackageReference Include="Npgsql" Version="4.0.2" />
-    <PackageReference Include="RestSharp" Version="106.3.1" />
     <PackageReference Include="xunit" Version="2.3.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AliceKit\AliceKit.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Services\GraphQL\queries\searchRecipes.gql" />
+    <Content Include="Services\GraphQL\queries\searchRecipes.gql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Services\GraphQL\queries\getRecipeById.gql" />
+    <Content Include="Services\GraphQL\queries\getRecipeById.gql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Services\GraphQL\queries\updateAliceImageId.gql" />
+    <Content Include="Services\GraphQL\queries\updateAliceImageId.gql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Config\config.json" />
+    <Content Include="Config\config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>

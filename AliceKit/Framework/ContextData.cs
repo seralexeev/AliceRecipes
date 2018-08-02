@@ -1,6 +1,6 @@
 ﻿using AliceKit.Protocol;
 
-namespace AliceKit {
+namespace AliceKit.Framework {
   public class ContextData {
     public string SessionId { get; set; }
     public string BlockName { get; set; }

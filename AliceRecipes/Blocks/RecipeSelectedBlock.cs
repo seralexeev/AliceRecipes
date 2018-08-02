@@ -1,14 +1,14 @@
+using AliceKit.Builders;
 using AliceKit.Framework;
 using AliceKit.Intent;
 using AliceKit.Protocol;
 using AliceRecipes.Models;
-using static AliceKit.Builders.ReplyBuilder;
 
-namespace AliceRecipes.States {
+namespace AliceRecipes.Blocks {
   public class RecipeSelectedBlock : BlockBase<RecipeSelectedBlock.StateType>,
     IIntentHandler<ButtonPressIntent>,
     IIntentHandler<CancelIntent> {
-    private readonly RecipeInfoReply _recipeInfoReply;
+    readonly RecipeInfoReply _recipeInfoReply;
 
     public RecipeSelectedBlock(RecipeInfoReply recipeInfoReply) {
       _recipeInfoReply = recipeInfoReply;
@@ -21,15 +21,15 @@ namespace AliceRecipes.States {
 
     public override (bool ok, IntentBase intent) TryGetIntent(RequestModel req) => _recipeInfoReply.TryGetIntent(req);
 
-    public class StateType {
-      public Recipe Recipe { get; set; }
-    }
-
     public HandleResult Handle(CancelIntent intent) =>
-      Reply("Хорошо, давай попробуем найти что то другое, назови рецепт который хочешь найти")
+      ReplyBuilder.Reply("Хорошо, давай попробуем найти что то другое, назови рецепт который хочешь найти")
         .BigImageCard("1030494/9825443721439c9ba843", card => card
           .Title("Назови рецепт который хочешь найти")
           .Description("И я найду его в моей огромной базе рецептов"))
         .Transition<PendingSearchBlock>();
+
+    public class StateType {
+      public Recipe Recipe { get; set; }
+    }
   }
 }

@@ -1,0 +1,7 @@
+mutation ($aliceImageId: String!, $id: Int!) {
+  updateRecipeById(input: {id: $id, recipePatch: {aliceImageId: $aliceImageId}}) {
+    recipe {
+      aliceImageId
+    }
+  }
+}

@@ -1,0 +1,12 @@
+query($q: String!, $offset: Int!, $first: Int!) {
+  query: searchRecipes(_search: $q, offset: $offset, first: $first) {
+    items: nodes {
+      id
+      name
+      image
+      aliceImageId
+      note
+      description
+    }
+  }
+}

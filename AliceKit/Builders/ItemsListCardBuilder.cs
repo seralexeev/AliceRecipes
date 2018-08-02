@@ -19,6 +19,12 @@ namespace AliceKit.Builders {
 
     public ItemsListCardBuilder Items(params ItemsListCardItem[] items) => Set(x => x.Items = items);
 
+    public ItemsListCardBuilder Items(Action<ItemsBuilder> func) {
+      var itemsBuilder = new ItemsBuilder();
+      func(itemsBuilder);
+      return Set(x => x.Items = itemsBuilder.Items.Select(t => t.CardItem).ToArray());
+    }
+
     public ItemsListCardBuilder Items<T>(IEnumerable<T> items,
       Func<T, ItemsListCardItemBuilder, ItemsListCardItemBuilder> itemBuilder) =>
       Items(items, (x, _, builder) => itemBuilder(x, builder));
@@ -31,8 +37,19 @@ namespace AliceKit.Builders {
 
     public static implicit operator ItemsListCard(ItemsListCardBuilder replyBuilder) => replyBuilder._card;
 
-    private ItemsListCardBuilder Set(Action<ItemsListCard> act) {
+    ItemsListCardBuilder Set(Action<ItemsListCard> act) {
       act(_card);
+      return this;
+    }
+  }
+
+  public class ItemsBuilder {
+    public List<ItemsListCardItemBuilder> Items { get; } = new List<ItemsListCardItemBuilder>();
+
+    public ItemsBuilder Add(Action<ItemsListCardItemBuilder> func) {
+      var builder = new ItemsListCardItemBuilder();
+      func(builder);
+      Items.Add(builder);
       return this;
     }
   }
@@ -47,7 +64,7 @@ namespace AliceKit.Builders {
     public ItemsListCardItemBuilder Button(string text, string url = null) =>
       Set(x => x.Button = new CardButton(text, url));
 
-    private ItemsListCardItemBuilder Set(Action<ItemsListCardItem> act) {
+    ItemsListCardItemBuilder Set(Action<ItemsListCardItem> act) {
       act(CardItem);
       return this;
     }

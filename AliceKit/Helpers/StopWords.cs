@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AliceKit {
+namespace AliceKit.Helpers {
   public class StopWords {
     public static readonly HashSet<string> Russian = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase) {
       "а",

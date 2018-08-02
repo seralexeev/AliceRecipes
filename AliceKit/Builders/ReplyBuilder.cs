@@ -49,7 +49,7 @@ namespace AliceKit.Builders {
       Transition = replyBuilder._transition
     };
 
-    private ReplyBuilder Set(Action<ResponseModel> act) {
+    ReplyBuilder Set(Action<ResponseModel> act) {
       act(_response);
       return this;
     }
